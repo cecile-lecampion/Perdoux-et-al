@@ -12,10 +12,10 @@ NB_DAY <- 4
 NB_ROOT <- 24
 
 # reference line
-RefLine <- "name_of_reference_line" # exemple : "col-0"
+RefLine <- "nom de la lignée de référence" # exemple : "WT"
 
 # Name of inhibitor
-inhibiteur <- "WYE 0.6µM"
+inhibiteur <- "nom de l'inhibiteur"  # exemple : "WYE 0.6µM"
 
 # Target order for order on the graph
 target_order <- c("WT", "tor-15", "TORp::TORG2268E")
@@ -52,14 +52,14 @@ strip_pos <- theme(panel.spacing = unit(0.3, "lines"),
                    strip.placement = "inside")
 #===============================================================================
 # Set working directory
-setwd("~/partage/Data")
+setwd("~/onedrive_amu/bio-informatique/figures_papier_romain")
 
 # Load data
 
 DMSO <- read.table("Data_curve_DMSO.txt", header = TRUE)
 colnames(DMSO) <- c("WT", "tor-15", "TORp::TORG2268E")
 
-Inhib <- read.table("Data_curve_WYE_0-6µM.txt", header = TRUE)
+Inhib <- read.table("Data_curve_inhibiteur.txt", header = TRUE, sep = '\t')
 colnames(Inhib) <- c("WT", "tor-15", "TORp::TORG2268E")
 
 ################################################################################################################################
@@ -373,6 +373,11 @@ REAL_ROOT_NUMBER <- ((aggregate(pourcent ~ lines, data=Data, function(x) {sum(!i
 summary$SE <- summary$sd/sqrt(REAL_ROOT_NUMBER)
 
 
+data0 <- data.frame(c(0,0,0), c("WT", "tor-15", "TORp::TORG2268E"), c(100,100,100), c(0,0,0), c(0,0,0))
+colnames(data0) <- colnames(summary)
+
+summary <- rbind(data0, summary)
+
 # Growth curve
 
 library(ggExtra)
@@ -386,7 +391,7 @@ p2 <- summary %>%
   geom_errorbar(aes(ymin=mean-SE, ymax=mean+SE), width=.2,
                 position=position_dodge(0.05)) +
   theme_light() +
-  ylim(0,120) +
+  ylim(0,130) +
   scale_colour_manual(values=my_colours, 
                       labels = c(expression("WT", italic("tor-15"), italic("TORp::TOR"^G2268E))))+
   scale_shape_manual(values=c(17, 16, 18), 
@@ -401,6 +406,31 @@ p2 <- summary %>%
   labs(title=TITLE, x="Day", y = Y_AXIS)
 
 print(p2)
+
+# Distribution violin plot
+
+library(Hmisc)
+p4 <- Data %>% mutate(lines = fct_relevel(lines, target_order)) %>% 
+  ggplot(aes(x=lines, y=pourcent, fill = lines, color = lines)) +
+  scale_fill_manual(values=my_colours)+
+  scale_color_manual(values = c(rep("black", 3)))+
+  geom_violin(trim=FALSE)+
+  stat_summary(fun.data=mean_sdl, geom="pointrange", color="red")+
+  geom_jitter(shape=21, position=position_jitter(0.2))+
+  theme_light()+
+  removeGridX() +
+  theme(legend.position="none",
+        axis.text.x = element_text(size=14, angle=45,  hjust = 1),
+        axis.text.y = element_text(size=14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        strip.text.x = element_text(color="black"))+
+  facet_wrap(~ Day, strip.position = "bottom")+
+  strip_pos +
+  scale_x_discrete(labels= c("WT" = "WT", "tor-15" = expression(italic("tor-15")), 
+                   "TORp::TORG2268E" = expression(italic("TORp::TOR"^G2268E))))
+
+p4
 
 # Growth at Day 4
 summary4<- summary[summary$Day== 4,]

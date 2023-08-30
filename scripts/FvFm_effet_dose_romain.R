@@ -1,4 +1,5 @@
 ################################################################
+# dose effect FvFm
 # Create a growth curve at the selectesd day for DMSO vs AZ data
 ################################################################
 
@@ -8,16 +9,16 @@ options(scipen=999)
 #### Part to modify #######################
 #===============================================================================
 # Variables 
-WORKDIR <- "~/onedrive_amu/bio-informatique/figures_papier_romain"
+WORKDIR <- "~/partage/bio-informatique/figures_papier_romain"
 
-Data <- "data_courbe.txt"
+Data <- "data_FvFm_dose_effect_AZD.txt"
 
 
 # Number of day
 NB_DAY <- 5
 
 # Day of interest
-DAY <- 5
+DAY <- 4
 
 # Reference line
 RefLine <- "WT"
@@ -25,26 +26,26 @@ RefLine <- "WT"
 
 # Target order for order on the graph
 target_order <- c("WT", "tor-15")
-az_order <- c("AZD.0.003.µM", "AZD.0.01.µM", "AZD.0.03.µM", "AZD.0.1.µM",  "AZD.0.3.µM", "AZD.1.µM", "AZD.3.µM", "AZD.10.µM", "AZD.30.µM"  )
+az_order <- c("AZD.0.003.µM", "AZD.0.01.µM", "AZD.0.03.µM", "AZD.0.1.µM",  "AZD.0.3.µM", "AZD.1.µM", "AZD.3.µM", "AZD.10.µM")
 
-# Variables to customize the growth curve
+# Variables de personnalisation du graphique pour la courbe de croissance
 
 TITLE <- ""
 Y_AXIS <- ""
 
 
-# Variables to customize the confidence interval plot
+# Variables de personnalisation du graphique pour l'analyse statistique
 
-# Color of points
+# Définir la couleur des points
 COULEUR <- "#dbdad7"
 
 
 
 if (!require(ggplot2)) { install.packages("ggplot2") }
 library(ggplot2)
-# Orientation of labels for X axis.
-# For horizontal labels : angle = 0, vjust = 0, hjust=0.
-# For 90° labels : angle = 90, vjust = 0.5, hjust=1
+# Orientationd des étiquettes de l'axe X.
+# Pour des étiquettes horizontales : angle = 0, vjust = 0, hjust=0.
+# Pour des étiquettes tournées de 90° : angle = 90, vjust = 0.5, hjust=1
 orientation_xlabels <- theme(axis.text.x = element_text(angle = 0, vjust = 0, hjust=0.5))
 
 # Position and appearance of group markers
@@ -60,12 +61,12 @@ strip_pos <- theme(panel.spacing = unit(0.3, "lines"),
 
 ################################################################################################################################
 
-# Functions
+# Fonction utilisée dans le script
 
 #=======================================================================================================================================
-# Check normality of the data. Break the loop if at least one of the group of data does not follow 
-# a normal law.
-# Return TRUE if the data follow a normal law
+# Vérifie la normalité des données. Sort de la boucle si au moins un des groupes de données ne suit 
+# pas une loi normale.
+#Retourne TRUE si les données suivent une loi normale
 #=======================================================================================================================================
 check_normality <- function(shapiro_df) {
   # On suppose que les données sont normales
@@ -73,9 +74,14 @@ check_normality <- function(shapiro_df) {
   
   for (i in 1 : nrow(shapiro_df)) {
     if(shapiro_df[i, 4] > 0.05) {
+      # print(paste0("les données ",shapiro_df$grouping_factor[i],"-", 
+      # shapiro_df$plant_line[i], " suivent une loi normale"), quote = FALSE)
       
     } else {
+      # print(paste0("les données ",shapiro_df$grouping_factor[i],"-", 
+      #          shapiro_df$plant_line[i], " ne suivent pas une loi normale"), quote = FALSE)
       
+      # En fait les données ne sont pas normales, pas besoin d'aller plus loin
       flag_normal <- FALSE
       break
     }
@@ -84,8 +90,8 @@ check_normality <- function(shapiro_df) {
 }
 
 #=======================================================================================================================================
-# Take Anova test results
-# Return TRUE if at list one of the mean is different
+# Prend les résultats du test Anova
+# Retourne TRUE si au moins une moyenne est significativement différente
 #=======================================================================================================================================
 check_anova <- function(anova_results) {
   flag_anova <- FALSE
@@ -103,8 +109,8 @@ check_anova <- function(anova_results) {
 }
 
 #=======================================================================================================================================
-# Take Kruskal-Wallis results
-# Return TRUE if at least one of the median is different
+# Fait le test de Kruskal-Wallis
+# Retourne TRUE si au moins une médianes est significativement différente
 #=======================================================================================================================================
 check_kruskal <- function(kruskal_pval) {
   flag_kruskal <- FALSE
@@ -122,8 +128,8 @@ check_kruskal <- function(kruskal_pval) {
 }
 
 #=======================================================================================================================================
-# Make Dunn test
-# Return pvalues in a dataframe
+# Fait le test de Dunn
+# retourne les pvalue dans un dataframe
 #=======================================================================================================================================
 test_dunn <- function(df_data) {
   pval <- as.data.frame(df_data%>%
@@ -134,8 +140,8 @@ test_dunn <- function(df_data) {
 }
 
 #=======================================================================================================================================
-# Make the plot when data follow a normal law 
-# Confidence interval is build around the mean
+# Réalise le graphique lorsque les données suivent une loi normale. L'intervalle de confiance est 
+# construit autour de la moyenne
 #=======================================================================================================================================
 plot_normal <- function(df, my_colours, my_summary) {
   p <- df %>%
@@ -148,8 +154,8 @@ plot_normal <- function(df, my_colours, my_summary) {
                     position=position_dodge(width=0.8)) + 
     scale_colour_manual(values="black") +
     scale_x_discrete(labels = c("WT", expression(italic("tor-15")))) +
-    scale_y_continuous(name = "Length",
-                       expand = expansion(mult = c(.1, .1))) +    # Extended scale 10% above the higher point and below the lower point 
+    scale_y_continuous(name = "FvFm",
+                       expand = expansion(mult = c(.1, .1))) +    # échelle augmentée de 10% au dessus du point le plus haut et en dessous du point le plus bas
     facet_wrap(~ traitement, strip.position = "bottom", scales = "free") +
     theme_classic() + 
     strip_pos +
@@ -160,11 +166,11 @@ plot_normal <- function(df, my_colours, my_summary) {
 
 
 #=======================================================================================================================================
-# Make the plot when data does not follow a normal law 
-# Confidence interval is build around the median
+# Réalise le graphique lorsque les données ne suivent pas une loi normale. L'intervalle de confiance est 
+# construit autour de la médiane
 #=======================================================================================================================================
 plot_not_normal <- function(df, my_colours, conf_int) {
-  # Column "median" have to be named "mesured_value" for the ggplot
+  # La colonne "median" doit porter le nom "mesured_value" pour le ggplot
   names(conf_int)[4] <- "DMSO_percent"
   
   p <- df %>%
@@ -177,8 +183,8 @@ plot_not_normal <- function(df, my_colours, conf_int) {
                     position=position_dodge(width=0.8)) +
     scale_colour_manual(values="black") +
     scale_x_discrete(labels = c("WT", expression(italic("tor-15")))) +
-    scale_y_continuous(name = "Length",
-                       expand = expansion(mult = c(.1, .1))) + # Extended scale 10% above the higher point and below the lower point 
+    scale_y_continuous(name = "FvFm",
+                       expand = expansion(mult = c(.1, .1))) + # échelle augmentée de 10% au dessus du point le plus haut et en dessous du point le plus bas
     facet_wrap(~ traitement, strip.position = "bottom", scales = "free") +
     theme_classic() +  
     strip_pos +
@@ -188,7 +194,7 @@ plot_not_normal <- function(df, my_colours, conf_int) {
 }
 ################################################################################################################################
 
-# Packages installation 
+# Installation des pacakges
 
 if (!require(tidyr)) { install.packages("tidyr") }
 if (!require(dplyr)) { install.packages("dplyr") }
@@ -212,8 +218,7 @@ setwd(WORKDIR)
 # Load data
 
 data_df <- read.table(Data, header = TRUE, sep = "\t")
-#data_df <- data_df[, c(1,2, 10 : ncol(data_df))]
-data_df <- data_df[,data_df[1,] != 144.600] 
+
 
 # Split the dataframe in dataframe of 2 columns and store in a list
 list <- lapply(seq(1, ncol(data_df), by=2), function(i)  
@@ -232,13 +237,13 @@ for (i in 1:length(list)) {
   colnames(list[[i]]) <- c("WT", "tor-15")
 }     
 
-#Remove first line
+#Supprimer la première ligne
 
 for (i in 1:length(list)) {
   list[[i]] <- list[[i]][-1, ]
 } 
 
-# Add traitment data in a column
+# Ajouter l'info du traitement dans une colonne
 
 for (i in 1:length(list)) {
   list[[i]]$traitement <- rep(names(list[i]), ncol(list[[i]]))
@@ -250,7 +255,7 @@ data <- do.call(rbind.data.frame, list)
 # add missing data
 
 # 5 mesures per root
-data$day <- rep(c(1:NB_DAY), nrow(data)/NB_DAY)
+data$day <- rep(c(0:(NB_DAY-1)), nrow(data)/NB_DAY)
 
 # Reoder columns
 data <- data[, c(3, 4, 1, 2)]
@@ -264,20 +269,21 @@ data$day <- as.factor(data$day)
 data <- data[data$day==DAY, ]
 
 # make data tidy
-data <- pivot_longer(data, where(is.numeric), names_to = "lines", values_to = ("length"))
+data <- pivot_longer(data, where(is.numeric), names_to = "lines", values_to = ("FvFm"))
 data <- data[order(data$lines),]
 
-# The curve is perfporm à day 5
-# Compute mean for DMSO at day 5 for both lines
+
+# The curve is perfporm à day 4
+# Compute mean for DMSO at day 4 for both lines
 summary_DMSO <- data[data$traitement == "DMSO", ] %>% dplyr::group_by(lines) %>%
-  summarise(mean = mean(length, na.rm = TRUE), sd= sd(length, na.rm = TRUE))
+  summarise(mean = mean(FvFm, na.rm = TRUE), sd= sd(FvFm, na.rm = TRUE))
 
 # Create a new dataframe with the result of Az/DMSO*100
 
 AZ_df <- data.frame(traitement = c(data$traitement[data$traitement != "DMSO"]), 
                     lines = c(data$lines[data$traitement != "DMSO"]))
 # Compute % AZ/DMSO for each mesure
-AZ_df$DMSO_percent <- (data$length[data$traitement != "DMSO"]/
+AZ_df$DMSO_percent <- (data$FvFm[data$traitement != "DMSO"]/
                          summary_DMSO$mean[match(AZ_df$lines, summary_DMSO$lines)])*100
 
 # Compute mean and SD for AZ_df$DMSO_percent 
@@ -287,7 +293,7 @@ summary_AZ <- AZ_df %>% dplyr::group_by(lines, traitement) %>%
 
 # Add standard error
 # Compute the real number of roots that have been mesured
-REAL_ROOT_NUMBER <- ((aggregate(length ~ lines + traitement, data=data[data$traitement != "DMSO", ], function(x) {sum(!is.na(x))}, na.action = NULL))) 
+REAL_ROOT_NUMBER <- ((aggregate(FvFm ~ lines + traitement, data=data[data$traitement != "DMSO", ], function(x) {sum(!is.na(x))}, na.action = NULL))) 
 colnames(REAL_ROOT_NUMBER) <- c("lines", "traitement", "number")
 
 REAL_ROOT_NUMBER <- REAL_ROOT_NUMBER[order(REAL_ROOT_NUMBER$lines),]
@@ -299,14 +305,14 @@ summary_AZ$SE <- summary_AZ$sd/(sqrt(REAL_ROOT_NUMBER$number))
 # Statistical analysis
 #___________________________________________________________________________________________________________________________________
 
-library(ggbeeswarm) # for geom_quasirandom()
-library(RColorBrewer) # for colors
-library(rstatix)  # for statistical test
-library(rcompanion) #to compute confidence interval for non parametric data
+library(ggbeeswarm) # pour la fonction geom_quasirandom
+library(RColorBrewer) # pour la définition des couleurs
+library(rstatix)  # pour les tests statistiques
+library(rcompanion) #pour le calcul de l'intervalle de confiance pour les données non paramétriques
 library(forcats)
 library(scales)
 
-# be sure that packages rmisc and plyr are not loaded
+# s'assurer que les package rmisc et plyr ne sont pas chargés`
 #detach(package:Rmisc)
 #detach(package:plyr)
 
@@ -315,6 +321,11 @@ library(scales)
 
 my_colours <- c("#4d4c4a", "#dbdad7")
 
+# Créer un objet target_order pour forcer l'ordre dans les graph 
+# Inhib$lines <- as.factor(Inhib$lines)
+# L <- levels(Inhib$lines)
+# L <- L[!(L %in% RefLine)]
+# target_order <- c(RefLine, L)
 
 # create a data frame with no NA
 AZ_df_No_NA <- subset(AZ_df, subset =! is.na(AZ_df$DMSO_percent))
@@ -334,7 +345,7 @@ if(flag_normal == TRUE) {
   # Summary
   if (!require(Rmisc)) {install.packages("Rmisc")}
   library(plyr) # dépendence de rmisc
-  library(Rmisc) # For summarySE
+  library(Rmisc) # pour la commande summarySE
   my_summary <- summarySE(AZ_df_No_NA, measurevar="DMSO_percent", 
                           groupvars=c("lines", "traitement"), na.rm = TRUE)
   
@@ -357,7 +368,7 @@ if(flag_normal == TRUE) {
                                      group_by(traitement) %>% tukey_hsd(DMSO_percent ~lines))
   }
   
-  # Save the files
+  # Sauver les fichiers
   write.table(my_summary, file = "Summary.txt", 
               quote = FALSE, row.names = FALSE, sep = '\t')
   write.table(anova_results, file = "Anova.txt", 
@@ -396,7 +407,8 @@ if(flag_normal == TRUE) {
   flag_kruskal <- check_kruskal(kruskal_pval)
   if (flag_kruskal == TRUE) { pval_dunn <- test_dunn(AZ_df) }
   
-  # Save the files
+  
+  # Sauver les fichiers
   write.table(conf_int, file = "Summary.txt", 
               quote = FALSE, row.names = FALSE, sep = '\t')
   write.table(kruskal_pval, file = "Kruskal.txt", 
@@ -409,14 +421,13 @@ if(flag_normal == TRUE) {
   #ggsave("Plot.svg", width=4, height=5)
 }
 
-
 # Curve
 # order the dataframe numericaly
 summary_AZ <- summary_AZ[order(factor(summary_AZ$traitement, levels=unique(az_order))),]
 summary_AZ <- summary_AZ[order(summary_AZ$lines),]
 
 # Replace traitement factors by numeric value
-concentration <- as.numeric(c(0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30))
+concentration <- as.numeric(c(0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10))
 summary_AZ$traitement <- rep(concentration, 2)
 
 x <- data.frame("tor-15", 0.001, 100, NA, NA)
@@ -458,15 +469,12 @@ p2 <- summary_AZ %>%
 print(p2)
 p2 + annotation_logticks(sides = "b")
 
-AZ_df2 <- AZ_df
-AZ_df2$con <- rep(concentration, each = 24)
-
-p3 <- p2 + geom_jitter(data = AZ_df2, aes(x = con, y = DMSO_percent, color= lines, shape = lines), position=position_jitter(0.2))
-p3 + annotation_logticks(sides = "b")
-
 
 # Violin plot
 library(Hmisc)
+
+AZ_df$traitement <- factor(AZ_df$traitement, levels= az_order)
+
 p4 <- AZ_df %>% mutate(lines = fct_relevel(lines, target_order)) %>% 
   ggplot(aes(x=lines, y=DMSO_percent, fill = lines, color = lines)) +
   scale_fill_manual(values=my_colours)+

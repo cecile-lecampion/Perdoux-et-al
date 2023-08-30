@@ -4,7 +4,7 @@
 #### Part to modify #######################
 #===============================================================================
 # Variables 
-WORKDIR <- "~/partage/bio-informatique/figures_papier_romain"
+WORKDIR <- "~/onedrive_amu/bio-informatique/figures_papier_romain"
 
 Data_DMSO <- "data_barplot_DMSO.txt"
 Data_Inhib <- "data_barplot_AZ.txt"
@@ -37,7 +37,7 @@ Y_AXIS <- ""
 
 # Color of points
 COULEUR <- "#dbdad7"
-  
+
 
 
 if (!require(ggplot2)) { install.packages("ggplot2") }
@@ -72,6 +72,7 @@ if (!require(RColorBrewer)) { install.packages("RColorBrewer") }
 if (!require(rcompanion)) { install.packages("rcompanion") }
 if (!require(ggtext)) { install.packages("ggtext") }
 if (!require(ggExtra)) {install.packages("ggExtra")}
+if (!require(Hmix)) {install.packages("Hmisc")}
 
 ################################################################################################################################
 # Functions
@@ -159,7 +160,7 @@ test_dunn <- function(df_data) {
 plot_normal <- function(df, my_colours, my_summary) {
   p <- df %>%
     mutate(lines = fct_relevel(lines, 
-                              target_order)) %>%
+                               target_order)) %>%
     ggplot( aes(x=lines, y=DMSO_percent)) +
     geom_quasirandom(dodge.width=0.8,alpha = 0.6, colour=COULEUR) +
     geom_pointrange(data=my_summary%>% mutate(lines = fct_relevel(lines,  target_order)), 
@@ -189,7 +190,7 @@ plot_not_normal <- function(df, my_colours, conf_int) {
   
   p <- df %>%
     mutate(lines = fct_relevel(lines, 
-                              target_order)) %>%
+                               target_order)) %>%
     ggplot( aes(x=lines, y=DMSO_percent)) +
     geom_quasirandom(dodge.width=0.8, alpha = 0.6, colour=COULEUR) +
     geom_pointrange(data=conf_int%>% mutate(lines = fct_relevel(lines,  target_order)), 
@@ -348,7 +349,7 @@ if(flag_normal == TRUE) {
   
   
   # Plot
-    
+  
   plot_not_normal(Inhib, my_colours, conf_int)
   
   # Stats
@@ -405,10 +406,10 @@ summary_Inhib <- cbind(summary_Inhib[match(target_order, summary_Inhib$lines),] 
 colnames(summary_Inhib)[5] <- "Labels"
 
 library(ggExtra)
-   
+
 
 p2 <- summary_Inhib %>% mutate(lines = fct_relevel(lines, target_order)) %>% 
-ggplot(aes(x=lines, y=mean, fill = lines, color = lines)) +
+  ggplot(aes(x=lines, y=mean, fill = lines, color = lines)) +
   scale_fill_manual(values=my_colours)+
   scale_color_manual(values = c(rep("black", length(c(1 : nrow(summary_Inhib))))))+
   geom_bar(stat="identity", width = 0.5)+
@@ -423,9 +424,34 @@ ggplot(aes(x=lines, y=mean, fill = lines, color = lines)) +
         axis.text.y = element_text(size=14),
         axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14))
-  
+
 p2 + scale_x_discrete(labels= c("WT" = "WT", "tor-15" = expression(italic("tor-15")), 
                                 "TORp::TORG2268E.1" = expression(italic("TORp::TOR"^G2268E.1)),  
                                 "TORp::TORG2268E.2" = expression(italic("TORp::TOR"^G2268E.2)), 
                                 "TORp::TORG2268E.3" = expression(italic("TORp::TOR"^G2268E.3))))
- 
+
+# Violin plot
+library(Hmisc)
+p3 <- Inhib %>% mutate(lines = fct_relevel(lines, target_order)) %>% 
+  ggplot(aes(x=lines, y=DMSO_percent, fill = lines, color = lines)) +
+  scale_fill_manual(values=my_colours)+
+  scale_color_manual(values = c(rep("black", length(c(1 : nrow(summary_Inhib))))))+
+  geom_violin(trim=FALSE)+
+  stat_summary(fun.data=mean_sdl, geom="pointrange", color="red")+
+  geom_jitter(shape=21, position=position_jitter(0.2))+
+  geom_text(summary_Inhib, mapping = aes(x = as.factor(lines), y= 130, 
+                label = Labels),
+            size = 5)+
+  ylim(0, 135)+
+  theme_light()+
+  removeGridX() +
+  theme(legend.position="none",
+        axis.text.x = element_text(size=14, angle=45,  hjust = 1),
+        axis.text.y = element_text(size=14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14))+
+  scale_x_discrete(labels= c("WT" = "WT", "tor-15" = expression(italic("tor-15")), 
+                             "TORp::TORG2268E.1" = expression(italic("TORp::TOR"^G2268E.1)),  
+                             "TORp::TORG2268E.2" = expression(italic("TORp::TOR"^G2268E.2)), 
+                             "TORp::TORG2268E.3" = expression(italic("TORp::TOR"^G2268E.3))))
+p3
