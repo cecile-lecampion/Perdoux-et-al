@@ -10,7 +10,7 @@ options(scipen=999)
 #### Part to modify #######################
 #===============================================================================
 # Variables 
-WORKDIR <- "~/partage/bio-informatique/figures_papier_romain"
+WORKDIR <- "~/onedrive_amu/bio-informatique/figures_papier_romain"
 
 Data <- "Data_curve_INK.txt"
 
@@ -23,7 +23,23 @@ az_order <- c("INK.0.01.µM", "INK.0.1.µM", "INK.1.µM", "INK.10.µM")
 TITLE <- ""
 Y_AXIS <- ""
 
+if (!require(ggplot2)) { install.packages("ggplot2") }
+library(ggplot2)
+# Orientation of labels for X axis.
+# For horizontal labels : angle = 0, vjust = 0, hjust=0.
+# For 90° labels : angle = 90, vjust = 0.5, hjust=1
+orientation_xlabels <- theme(axis.text.x = element_text(angle = 0, vjust = 0, hjust=0.5))
 
+# Position and appearance of group markers
+# The default values ​​produce a graph where the parts of the graph are separated with the factor
+# of grouping in a frame inside the graph.
+# You can modify it like this:
+# joining parts: panel.spacing = unit(0, "lines")
+# No frame around grouping factor: strip.background = element_rect(colour=NA, fill=NA
+# grouping factor outside the graph :strip.placement = "outside"
+strip_pos <- theme(panel.spacing = unit(0.3, "lines"), 
+                   strip.background = element_rect(colour="black", fill=NA),
+                   strip.placement = "inside")
 
 ################################################################################################################################
 
@@ -270,4 +286,29 @@ p2 <- summary_INK %>%
 
 print(p2)
 p2 + annotation_logticks(sides = "b")
+
+# Violin plot
+# Violin plot
+library(Hmisc)
+az_order2 <- c("INK.0.01", "INK.0.1", "INK.1", "INK.10")
+p4 <- INK_df %>% mutate(Concentration = fct_relevel(Concentration, az_order2)) %>% 
+  ggplot(aes(x="", y=DMSO_percent, fill = Concentration, color = Concentration)) +
+  scale_fill_manual(values=c(rep("#dbdad7", 4)))+
+  scale_color_manual(values = c(rep("black", 4)))+
+  geom_violin(trim=FALSE)+
+  stat_summary(fun.data=mean_sdl, geom="pointrange", color="red")+
+  geom_jitter(shape=21, position=position_jitter(0.2))+
+  theme_light()+
+  removeGridX() +
+  theme(legend.position="none",
+        axis.text.x = element_text(size=14, angle=45,  hjust = 1),
+        axis.text.y = element_text(size=14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        strip.text.x = element_text(color="black"))+
+  facet_wrap(~ Concentration, strip.position = "bottom")+
+  strip_pos 
+  #scale_x_discrete(labels= c("WT" = "WT", "tor-15" = expression(italic("tor-15"))))
+
+p4
 
